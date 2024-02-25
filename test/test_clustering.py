@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-import sys
-from os.path import *
 from pyflann import *
-import os
-from copy import copy
 from numpy import *
 from numpy.random import *
 import unittest, time

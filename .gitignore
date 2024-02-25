@@ -5,6 +5,9 @@ tmp
 src/matlab/*.dat
 src/matlab/test.m
 src/python/setup.py
+src/python/build
+src/python/dist
+src/python/flann.egg-info
 test/*.h5
 test/*.pkl
 test/*.idx

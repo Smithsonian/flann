@@ -25,6 +25,23 @@
 #THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #from pyflann.flann_ctypes import *  # NOQA
+
+# *** EDITED ***
+# 2023 Dec by M. Pan -- fix bug in removing points from curindex_data
+#
+#     Because self.__curindex_data is a simple numpy array, if there have
+#     been previous removals of points from this FLANN index, the idx used
+#     to specify a point in self.__curindex *may not* be the same as that
+#     point's location in self.__curindex_data.
+#
+#     The fix in place adds another attribute to the FLANN class,
+#     self.__dataidx . This is a dictionary whose keys are valid indexes
+#     in self.__curindex , and whose corresponding values are the indexes
+#     in the numpy array self.__curindex_data corresponding to the
+#     self.__curindex indexes. There is one other item in self.__dataidx
+#     with key 'nextidx', which contains the next self.__curindex index
+#     value to be used when the next point is added to the FLANN index.
+
 import sys
 from ctypes import pointer, c_float, byref, c_char_p
 from pyflann.flann_ctypes import (flannlib, FLANNParameters, allowed_types,
@@ -66,6 +83,7 @@ def to_bytes(string):
         return bytes(string, 'utf-8')
     return string
 
+
 # This class is derived from an initial implementation by Hoyt Koepke
 # (hoytak@cs.ubc.ca)
 
@@ -90,6 +108,7 @@ class FLANN(object):
         self.__curindex = None
         self.__curindex_data = None
         self.__curindex_type = None
+        self.__dataidx = None
 
         self.__flann_parameters = FLANNParameters()
         self.__flann_parameters.update(kwargs)
@@ -176,6 +195,14 @@ class FLANN(object):
         self.__curindex_data = pts
         self.__curindex_type = pts.dtype.type
 
+        # NEW self.dataidx : dictionary matching idx of point in curindex
+        #     with index of point in np.array pts
+        #     nextidx keys next item to be made when next new point added
+
+        dataidx = {x: x for x in range(len(pts))}
+        dataidx['nextidx'] = len(pts)
+        self.__dataidx = dataidx
+
         params = dict(self.__flann_parameters)
         params['speedup'] = speedup.value
 
@@ -189,9 +216,11 @@ class FLANN(object):
             flann.save_index[self.__curindex_type](
                 self.__curindex, c_char_p(to_bytes(filename)))
 
-    def load_index(self, filename, pts):
+    def load_index(self, filename, pts, dataidx=None):
         """
         Loads an index previously saved to disk.
+        ** NB ** the points themselves must be input separately, as pts
+                 as should the pts-to-curindex correspondence, as dataidx
         """
 
         if pts.dtype.type not in allowed_types:
@@ -206,19 +235,25 @@ class FLANN(object):
             self.__curindex = None
             self.__curindex_data = None
             self.__curindex_type = None
+            self.__dataidx = None
 
         self.__curindex = flann.load_index[pts.dtype.type](
             c_char_p(to_bytes(filename)), pts, npts, dim)
         self.__curindex_data = pts
         self.__curindex_type = pts.dtype.type
-        
-        
+
+        if dataidx is None:
+            dataidx = {x: x for x in range(len(pts))}
+            dataidx['nextidx'] = len(pts)
+
+        self.__dataidx = dataidx
+
     def used_memory(self):
         """
         Returns the number of bytes consumed by the index.
         """
         return flann.used_memory[self.__curindex_type](self.__curindex)
-        
+
     def add_points(self, pts, rebuild_threshold=2.0):
         """
         Adds points to pre-built index.
@@ -228,21 +263,34 @@ class FLANN(object):
             rebuild_threshold: reallocs index when it grows by factor of \
                 `rebuild_threshold`. A smaller value results is more space \
                 efficient but less computationally efficient. Must be greater \
-                than 1.           
+                than 1.
         """
         if not pts.dtype.type in allowed_types:
-            raise FLANNException("Cannot handle type: %s"%pts.dtype)
-        pts = ensure_2d_array(pts,default_flags) 
+            raise FLANNException("Cannot handle type: %s" % pts.dtype)
+        pts = ensure_2d_array(pts, default_flags)
         npts, dim = pts.shape
         flann.add_points[self.__curindex_type](self.__curindex, pts, npts, dim, rebuild_threshold)
-        self.__curindex_data = np.row_stack((self.__curindex_data,pts))
-        
+        self.__curindex_data = np.row_stack((self.__curindex_data, pts))
+
+        # edit dataidx to include new points
+        firstidx = self.__dataidx['nextidx']
+        ndata = len(self.__curindex_data) - npts
+        dataidx_add = {x + firstidx: x + ndata for x in range(npts)}
+        dataidx_add['nextidx'] = firstidx + len(pts)
+        self.__dataidx.update(dataidx_add)
+
     def remove_point(self, idx):
         """
-        Removes a point from a pre-built index.         
+        Removes a point from a pre-built index.
         """
         flann.remove_point[self.__curindex_type](self.__curindex, idx)
-        self.__curindex_data = np.delete(self.__curindex_data,idx,axis=0)
+        self.__curindex_data = np.delete(self.__curindex_data, self.__dataidx[idx], axis=0)
+
+        # now remove points correctly from dataidx
+        dataidx_edit = {k: v - 1 for k, v in self.__dataidx.items()
+                        if isinstance(k, int) and k > idx}
+        self.__dataidx.pop(idx)
+        self.__dataidx.update(dataidx_edit)
 
     def nn_index(self, qpts, num_neighbors=1, **kwargs):
         """
