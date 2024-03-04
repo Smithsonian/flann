@@ -10,7 +10,7 @@ MPC forked FLANN
 This https://github.com/Smithsonian/flann fork of flann is used as a submodule in mpc-software. Specifically, flann is used by mpc-heliolinc to create and traverse KD-trees.  
 The latest changes of MPC's forked flann can be pulled into mpc-software by running: `git submodule update --recursive --remote` to bring latest changes from flann:master into flann submodule. 
 
-Changes into forked flann repository can be pushed from mpc-software repo or directly from forked flann repo. Therefore, `git pull` should be run regularly on branches created from flann:master to make sure the latest changes are applied.
+Changes into forked flann repository SHOULD be pushed ONLY from mpc's forked flann repository directly. `git pull` should be run regularly on branches created from flann:master to make sure the latest changes are applied.
 
 Initial installation of MPC's FLANN
 -----------------
