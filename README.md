@@ -12,7 +12,7 @@ The latest changes of MPC's forked flann can be pulled into mpc-software by runn
 
 Changes into forked flann repository SHOULD be pushed ONLY from mpc's forked flann repository directly. `git pull` should be run regularly on branches created from flann:master to make sure the latest changes are applied.
 
-Initial installation of MPC's FLANN
+Initial installation of MPC's FLANN on Rocky Linux
 -----------------
 
 ```console
@@ -24,9 +24,23 @@ mkdir build
 
 cd build  
 
-cmake ..  
+sudo dnf update  
 
-make
+sudo dnf install epel-release    
 
-sudo make install
+sudo dnf install lz4 lz4-devel  
+
+sudo dnf install hdf5 hdf5-devel hdf5-static  
+
+sudo dnf install cmake    
+
+sudo cmake ..  
+
+sudo make  
+
+sudo make install  
+
+pip install pyflann-py3  
+
+sudo dnf install pytest
 ```
