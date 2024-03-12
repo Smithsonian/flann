@@ -32,6 +32,10 @@ sudo dnf install lz4 lz4-devel
 
 sudo dnf install hdf5 hdf5-devel hdf5-static  
 
+sudo dnf install numpy  
+
+sudo dnf install pytest  
+
 sudo dnf install cmake    
 
 sudo cmake ..  
@@ -39,8 +43,13 @@ sudo cmake ..
 sudo make  
 
 sudo make install  
-
-pip install pyflann-py3  
-
-sudo dnf install pytest
 ```
+
+Testing the above installation
+-----------------
+
+A good sanity check would be to run `test_mpcflann.py` test after executing the above commands:  
+
+`cd flann/test`  
+
+`pytest test_mpcflann.py`
