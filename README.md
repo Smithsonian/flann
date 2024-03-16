@@ -12,10 +12,19 @@ The latest changes of MPC's forked flann can be pulled into mpc-software by runn
 
 Changes into forked flann repository SHOULD be pushed ONLY from mpc's forked flann repository directly. `git pull` should be run regularly on branches created from flann:master to make sure the latest changes are applied.
 
-Initial installation of MPC's FLANN on Rocky Linux
------------------
+### Shell script installation of flann for Rocky Linux 9  
 
-```console
+```
+git clone https://github.com/Smithsonian/flann  
+
+cd flann  
+
+./flann_installation.sh  
+```  
+
+### Manual installation of flann on Rocky Linux 9
+
+```
 git clone https://github.com/Smithsonian/flann  
 
 cd flann  
@@ -45,11 +54,6 @@ sudo make
 sudo make install  
 ```
 
-Testing the above installation
------------------
+Good sanity check would be to `cd` to `flann/test` and run:
 
-A good sanity check would be to run `test_mpcflann.py` test after executing the above commands:  
-
-`cd flann/test`  
-
-`pytest test_mpcflann.py`
+$ `pytest test_mpcflann.py`
