@@ -4,7 +4,7 @@ FLANN is a library for performing fast approximate nearest neighbor searches in 
 FLANN is written in C++ and contains bindings for the following languages: C, MATLAB, Python, and Ruby.  
 FLANN is distributed under the terms of the [BSD License](https://github.com/mariusmuja/flann/blob/master/COPYING).
 
-MPC forked FLANN
+MPC's fork of FLANN
 -------------
 
 This https://github.com/Smithsonian/flann fork of flann is used as a submodule in mpc-software. Specifically, flann is used by mpc-heliolinc to create and traverse KD-trees.  
@@ -56,4 +56,24 @@ sudo make install
 
 Good sanity check would be to `cd` to `flann/test` and run:
 
-$ `pytest test_mpcflann.py`
+$ `pytest test_mpcflann.py`  
+
+### Manual installation of flann on non Rocky Linux 9 operating systems.  
+
+To manually install `flann` on your machine, first, install (using package manager as per your operating system) all the required libraries:  
+`lz4`, `lz4-devel`, `hdf5`, `hdf5-devel`, `hdf5-static`, `cmake`, `numpy` and `pytest` for running python tests. After all the libraries are installed follow the following steps:  
+```
+git clone https://github.com/Smithsonian/flann  
+
+cd flann  
+
+mkdir build  
+
+cd build  
+
+cmake ..  
+
+make  
+
+make install  
+```
